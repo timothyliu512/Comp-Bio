@@ -7,7 +7,8 @@ import pandas as pd
 # df = pd.read_csv('SRR24133807.fastq', delimiter='\t')
 
 df = pd.DataFrame(pd.read_csv('SRR24133807.fastq', sep='\t', header=None).values.reshape(-1, 4), columns=['read_id', 'seq', '+', 'qual'])
-print(df)
+print(df.qual.to_string(index=False))
+
 '''
 df = pd.DataFrame
 
