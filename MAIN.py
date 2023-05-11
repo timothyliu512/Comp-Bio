@@ -6,7 +6,7 @@ sc.settings.verbosity = 3             # verbosity: errors (0), warnings (1), inf
 sc.logging.print_header()
 sc.settings.set_figure_params(dpi=80, facecolor='white')
 
-results_file = 'write/Parent_NGSC3'  # the file that will store the analysis results
+results_file = 'write/Analysis_Results'  # the file that will store the analysis results
 
 adata = sc.read_10x_mtx(
     'data',  # the directory with the `.mtx` file
@@ -34,10 +34,32 @@ sc.pp.neighbors(adata, n_neighbors=10, n_pcs=40)
 
 # Louvain clustering
 sc.tl.louvain(adata)
-
 sc.tl.umap(adata)
 
+sc.tl.rank_genes_groups(adata, 'louvain', method='t-test')
+# sc.tl.rank_genes_groups(adata, 'leiden', method='t-test')
+# sc.pl.rank_genes_groups(adata, n_genes=25, sharey=False)
+
 # Visualizing the clustering
-sc.pl.umap(adata, color=['louvain'])
+sc.pl.umap(adata, color='louvain', title='UMAP visualization of Louvain clusters', legend_loc='on data')
 
 adata
+
+# Extract top ranked genes for each cluster
+marker_genes = {}
+for cluster in range(len(adata.obs['louvain'].cat.categories)):
+    genes_of_interest = adata.uns['rank_genes_groups']['names'][str(cluster)]
+    pvals_adj = adata.uns['rank_genes_groups']['pvals_adj'][str(cluster)]
+    
+    # Filter genes with adjusted p-value < 0.05
+    genes_significant = genes_of_interest[pvals_adj < 0.05]
+    
+    # Add to dictionary
+    marker_genes[cluster] = genes_significant
+    
+# Print top 10 marker genes for each cluster
+for cluster, genes in marker_genes.items():
+    print(f"Cluster {cluster}:")
+    print(genes[:10])
+    print("\n")
+
